@@ -1,0 +1,46 @@
+<ul class="comments">
+    {% for comment in comments %}
+        <li class="comment">
+            <div class="post-comment">
+                <div class="comment-author">
+                    {{ comment.reply_username }}
+                    {% if  comment.comment_username %}
+                        <span class="comment-date"> Reply </span>
+                        {{ comment.comment_username }}
+                    {% endif %}
+                    <span class="comment-date">{{ comment.create_at }}</span>
+                </div>
+                <div class="comment-content">
+                    {{ comment.content }}
+                </div>
+
+                <div>
+                    <a href="#" class="reply" commentid={{ comment.comment_id }} data-toggle="modal" data-target="#commentModel">Reply</a>
+                    {% if user == session.username  %}
+                        <a class="reply" href="{{ url_for('main.delete_comment', username=user, post_id=postid, comment_id=comment.comment_id) }}">Delete</a>
+                    {% endif %}
+                    <!-- 模态框（Modal） -->
+                    <div class="modal fade" id="commentModel" aria-hidden="true" tabindex="-1" role="dialog"
+                         aria-labelledby="myModalLabel">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"
+                                            aria-hidden="true">&times;</button>
+                                    <h4 class="modal-title" id="myModalLabel">Reply</h4>
+                                </div>
+                                <div class="modal-body">
+                                    {{ wtf.quick_form(form) }}
+                                </div>
+{#                                <div class="modal-footer">#}
+{#                                    <a class="btn btn-default"#}
+{#                                       href="{{ url_for('main.reply', comment_id = comment.comment_id) }}"> Reply</a>#}
+{#                                </div>#}
+                            </div><!-- /.modal-content -->
+                        </div><!-- /.modal -->
+                    </div>
+                </div>
+            </div>
+        </li>
+    {% endfor %}
+</ul>
