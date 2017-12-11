@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %} server &middot; SA 系统 {% endblock %}
+
+{% block content %}
+
+    <ul class="posts">
+        {% for server in servers %}
+            <li class="post">
+                <div class="post-content">
+                    <div class="post-title">
+                        <a href="{{ url_for('main.post', username=user, post_id=post.post_id) }}">
+                            <h2>{{ post.title }}</h2>
+                        </a>
+                    </div>
+                    <div>
+                        <div class="post-date">{{ post.create_at }}</div>
+                    </div>
+                    <div class="post-body">
+                        {{ post.content }}
+                        <div>
+                            <a class="post-desc" href="{{ url_for('main.post', username=user, post_id=post.post_id) }}">
+                                Read More ->
+                            </a>
+                            &nbsp; &nbsp;
+                            {% if user == session.username %}
+                                <a class="btn btn-primary"
+                                   href="{{ url_for('main.edit_post', username=user, post_id=post.post_id) }}">Edit</a>
+                                <a class="btn btn-danger"
+                                   href="{{ url_for('main.delete_post',username=user, post_id=post.post_id) }}">Delete</a>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+
+                </div>
+            </li>
+        {% else %}
+            <li><em>Unbelievable. No entries here so far</em></li>
+        {% endfor %}
+    </ul>
+    {% if pagination %}
+        <div class="pagination">
+            {{ macros.pagination_widget(pagination, endpoint) }}
+        </div>
+    {% endif %}
+{% endblock %}
+
