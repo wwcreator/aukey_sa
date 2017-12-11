@@ -8,7 +8,7 @@ app = create_app()
 app.secret_key = config.SECRET_KEY
 app.permanent_session_lifetime = timedelta(minutes=60)
 # manager = Manager(app)
-
+#
 # @manager.option('-h', '--host', dest='host', default='127.0.0.1')
 # @manager.option('-p', '--port', dest='port', type=int, default=5000)
 # @manager.option('-w', '--workers', dest='workers', type=int, default=2)

@@ -1,11 +1,30 @@
-
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %} Login &middot; SA 系统 {% endblock %}
+
+
 {% block page_content %}
-<div class="page-header">
-    <h1>Hello, {% if name %}{{ name }}{% else %}Stranger{% endif %}!</h1>
-</div>
-{{ wtf.quick_form(form) }}
+{#{% if not session.logged_in %}#}
+
+
+    <div class="page-header">
+        <h1>Login</h1>
+        <small>Page</small>
+    </div>
+
+    <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+    {#    <br>#}
+    {#    <p>Forgot your password? <a href="{{ url_for('auth.password_reset_request') }}">Click here to reset it</a>.</p>#}
+    {#    <p>New user? <a href="{{ url_for('auth.register') }}">Click here to register</a>.</p>#}
+    </div>
+
+
+
+{#{% endif %}#}
+
 {% endblock %}
+
 
 

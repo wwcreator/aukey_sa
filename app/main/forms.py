@@ -1,13 +1,24 @@
+# -*- coding: utf8 -*-
+
 from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField, BooleanField, SubmitField
+from wtforms import StringField,PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 
 
-
 class LoginForm(FlaskForm):
-    username = StringField('UserName', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Keep me logged in')
-    submit = SubmitField('Sign In')
+    username = StringField(u'用户名', validators=[DataRequired()])
+    password = PasswordField(u'密码', validators=[DataRequired()])
+    # remember_me = BooleanField('Keep me logged in')
+    submit = SubmitField(u'登录')
 
 
+class AddServerForm(FlaskForm):
+    server_name = StringField(u'服务器名称', validators=[DataRequired()])
+    server_ip = StringField(u'服务器 IP', validators=[DataRequired()])
+    server_username = StringField(u'服务器用户名', validators=[DataRequired()])
+    server_password = PasswordField(u'服务器密码', validators=[DataRequired()])
+    server_env = SelectField(u'所属环境', choices=[('production','PRODUCTION'),('dev','DEV'), ('test', 'TEST')])
+    server_tag = StringField(u'标签', validators=[DataRequired()])
+    server_type = SelectField(u'类型', choices=[(u'物理机'),(u'虚拟机')])
+    server_loc = StringField(u'机房机架号', validators=[DataRequired()])
+    submit = SubmitField(u'添加')

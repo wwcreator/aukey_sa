@@ -15,7 +15,6 @@ pagedown = PageDown()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'main.login'
-images = UploadSet('images', IMAGES)
 
 
 def create_app():
@@ -26,9 +25,6 @@ def create_app():
     moment.init_app(app)
     pagedown.init_app(app)
     login_manager.init_app(app)
-    app.config['UPLOADED_IMAGES_DEST'] = './app/static/images/'
-    app.config['UPLOADED_IMAGES_URL'] = 'http://127.0.0.1:5000/static/images/'
-    configure_uploads(app, images)
     patch_request_class(app)
 
     from .main import main as main_blueprint

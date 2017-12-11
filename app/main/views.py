@@ -1,13 +1,10 @@
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
+# -*- coding: utf8 -*-
 
 import time
 import math
+import paramiko
 import hashlib
-# from datetime import timedelta
-# from flask_login import login_manager
-from forms import LoginForm
+from forms import LoginForm, AddServerForm
 from flask import (render_template,
                    g,
                    request,
@@ -17,20 +14,12 @@ from flask import (render_template,
                    url_for,
                    flash)
 
-
 import MySQLdb as mdb
 
 from config import config
 from . import main
-# import bleach
-from markdown import markdown, Markdown
 
-# try:
-#     conn = mdb.connect(**config.db_config)
-#     cursor = conn.cursor()
-# except Exception, e:
-#     print e
-#     sys.exit()
+
 
 
 @main.before_request
@@ -38,10 +27,19 @@ def before_request():
     g.db = mdb.connect(**config.db_config)
 
 
-# @main.teardown_request
-# def teardown_request():
-#     if hasattr(g, 'db'):
-#         g.db.close()
+def sshclient_execmd(hostname, port, username, password, execmd):
+    paramiko.util.log_to_file("paramiko.log")
+
+    s = paramiko.SSHClient()
+    s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    s.connect(hostname=hostname, port=port, username=username, password=password)
+    stdin, stdout, stderr = s.exec_command(execmd)
+    stdin.write("Y")  # Generally speaking, the first connection, need a simple interaction.
+
+    print stdout.read()
+
+    s.close()
 
 
 def verify_user(username):
@@ -96,79 +94,168 @@ def get_reccount(table_name, where):
     return int(rec_count[0])
 
 
-# def paginate(table_name, where, page):
-#     pagination = {}
-#     pagecount = int(math.floor(get_reccount(table_name, where)/config.POSTS_PER_PAGE) + 1)
-#     pagination['pagecount'] = pagecount
-#     pagination['page'] = page
-#     if page == 1 & page != pagecount:
-#         pagination['has_prev'] = False
-#         pagination['has_next'] = True
-#         pagination['prev_num'] = page
-#         pagination['next_num'] = page + 1
-#     elif page != 1 & page == pagecount:
-#         pagination['has_next'] = False
-#         pagination['has_prev'] = True
-#         pagination['prev_num'] = page - 1
-#         pagination['next_num'] = page
-#     elif page == pagecount & page == 1:
-#         pagination['has_next'] = False
-#         pagination['has_prev'] = False
-#         pagination['prev_num'] = page
-#         pagination['next_num'] = page
-#     else:
-#         pagination['has_prev'] = True
-#         pagination['has_next'] = True
-#         pagination['prev_num'] = page - 1
-#         pagination['next_num'] = page + 1
-#     return pagination
+def paginate(table_name, where, page):
+    pagination = {}
+    pagecount = int(math.floor(get_reccount(table_name, where) / config.POSTS_PER_PAGE) + 1)
+    pagination['pagecount'] = pagecount
+    pagination['page'] = page
+    if page == 1 & page != pagecount:
+        pagination['has_prev'] = False
+        pagination['has_next'] = True
+        pagination['prev_num'] = page
+        pagination['next_num'] = page + 1
+    elif page != 1 & page == pagecount:
+        pagination['has_next'] = False
+        pagination['has_prev'] = True
+        pagination['prev_num'] = page - 1
+        pagination['next_num'] = page
+    elif page == pagecount & page == 1:
+        pagination['has_next'] = False
+        pagination['has_prev'] = False
+        pagination['prev_num'] = page
+        pagination['next_num'] = page
+    else:
+        pagination['has_prev'] = True
+        pagination['has_next'] = True
+        pagination['prev_num'] = page - 1
+        pagination['next_num'] = page + 1
+    return pagination
 
 
-# @main.route('/', methods=['GET', 'POST'])
-# def index():
-#     page = request.args.get('page', 1, type=int)
-#     query = """SELECT title, concat(LEFT(content, 200),' ...'), username , from_unixtime(create_at)create_at, post_id
-#                FROM posts
-#                INNER JOIN users
-#                ON users.user_id = posts.user_id
-#                WHERE status = 1
-#                ORDER BY create_at DESC
-#                LIMIT %s OFFSET %s
-#                """ % (config.POSTS_PER_PAGE, config.POSTS_PER_PAGE*(page - 1))
-#     c = g.db.cursor()
-#     c.execute(query)
-#     posts = [dict(title=row[0], content=row[1], username=row[2], create_at=row[3], post_id=row[4]) for row in c.fetchall()]
-#     pagination = paginate('posts', 'status = 1', page)
-#     return render_template('index.html', endpoint='main.index', posts=posts, pagination=pagination)
+def is_connect(ip, user, port, password):
+	ip = ip
+	user = user
+	password = password
+	port = port
+	ssh = paramiko.SSHClient()
+	# 这行代码的作用是允许连接不在know_hosts文件中的主机
+	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	try :
+		ssh.connect(ip, port, user, password)
+		ssh.close()
+		return True
+	except :
+		return False
+
+
+def collect_info(ip, user, port, password):
+	info = {}
+	ip = ip
+	user = user
+	password = password
+	port = port
+	ssh = paramiko.SSHClient()
+	# 这行代码的作用是允许连接不在know_hosts文件中的主机
+	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	ssh.connect(ip, port, user, password)
+	(stdin, stdout, stderr) = ssh.exec_command('cat /proc/cpuinfo |grep "processor"|wc -l')
+	cpuinfo = stdout.read()
+	(stdin, stdout, stderr) = ssh.exec_command("free -m|grep 'Mem:'|awk '{print $2}'")
+	meminfo = stdout.read()
+	(stdin, stdout, stderr) = ssh.exec_command("df -kl|awk '{print $2,$3}'|sed '1d'|awk '{sum += $2};END {print sum}'")
+	used_disk = stdout.read()
+	(stdin, stdout, stderr) = ssh.exec_command("df -kl|awk '{print $2,$3}'|sed '1d'|awk '{sum += $1};END {print sum}'")
+	all_disk = stdout.read()
+	(stdin, stdout, stderr) = ssh.exec_command("""cat /proc/uptime| awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("%d Day %d:%d:%d \n",run_days,run_hour,run_minute,run_second)}'""")
+	uptime = stdout.read()
+	(stdin, stdout, stderr) = ssh.exec_command("uname -a")
+	release = stdout.read()
+	ssh.close()
+	info['cpuinfo'] = cpuinfo
+	info['meminfo'] = meminfo
+	info['free_disk'] = all_disk - used_disk
+	info['all_disk'] = all_disk
+	info['uptime'] = uptime
+	info['release'] = release
+	return info
+
+
 @main.route('/', methods=['GET', 'POST'])
-def index():
-    name = None
+@main.route('/login', methods=['GET', 'POST'])
+def login():
     form = LoginForm()
     if form.validate_on_submit():
-        name = form.name.data
-        form.name.data = ''
-    return render_template('login.html', form=form, name=name)
+        form_password = form.password.data
+        username = form.username.data
+        # remember_me = form.remember_me.data
+        salt = get_salt(username)
+        password = hashlib.md5(hashlib.md5(form_password + salt).hexdigest()).hexdigest()
+        if not verify_user(username):
+            flash('Invalid username.')
+        elif not verify_password(username, password):
+            flash('Invalid password.')
+        else:
+            session['logged_in'] = True
+            session['username'] = username
+            # flash('You were logged in.')
+            return redirect(url_for('main.portal'))
+    return render_template('login.html', form=form)
 
 
-# @main.route('/login', methods=['GET', 'POST'])
-# def login():
-#     form = LoginForm()
-#     if form.validate_on_submit():
-#         form_password = form.password.data
-#         username = form.username.data
-#         # remember_me = form.remember_me.data
-#         salt = get_salt(username)
-#         password = hashlib.md5(hashlib.md5(form_password + salt).hexdigest()).hexdigest()
-#         if not verify_user(username):
-#             flash('Invalid username.')
-#         elif not verify_password(username, password):
-#             flash('Invalid password.')
-#         else:
-#             session['logged_in'] = True
-#             session['username'] = username
-#             # flash('You were logged in.')
-#             return render_template('main.html')
-#     return render_template('login.html', form=form)
+@main.route('/portal', methods=['GET', 'POST'])
+def portal():
+    return render_template('main.html')
+
+
+@main.route('/server/<env>', methods=['GET', 'POST'])
+def server(env):
+	if env == 'production':
+		server_env = 1
+	elif env == 'test':
+		server_env = 2
+	elif env == 'dev':
+		server_env = 3
+	else:
+		server_env = 4
+
+	page = request.args.get('page', 1, type=int)
+	query = """ SELECT * FROM infra_server WHERE server_env = '%s' AND is_delete=0 LIMIT %s OFFSET %s """ % (
+	server_env, config.POSTS_PER_PAGE, config.POSTS_PER_PAGE * (page - 1))
+	c = g.db.cursor()
+	c.execute(query)
+	servers = [dict(id=row[0], server_hostname=row[1], server_ip=row[2], server_env=row[3], post_id=row[4]) for row in
+			   c.fetchall()]
+	pagination = paginate('infra_server', 'server_env = ' + str(server_env) + ' AND is_delete = 0', page)
+
+	return render_template('server.html', endpoint='main.server', servers=servers, pagination=pagination)
+
+
+@main.route('/server/add', methods=['GET', 'POST'])
+def add_server():
+	form = AddServerForm()
+	if form.validate_on_submit():
+		server_name = form.server_name.data
+		server_ip = form.server_ip.data
+		server_username = form.server_username.data
+		server_password = form.server_password.data
+		server_env = form.server_env.data
+		server_tag = form.server_tag.data
+		server_type = form.server_type.data
+		server_loc = form.server_loc.data
+		if is_connect(server_ip, server_username, 22, server_password):
+			server_info = collect_info(server_ip, server_username, 22, server_password)
+			query = """INSERT INTO infra_server(server_name,server_ip,server_username,server_password,server_env,server_tag,server_type,server_loc)
+					  VALUES('%s','%s','%s','%s','%s','%s','%s','%s')		  
+			""" %(server_name, server_ip, server_username, server_password, server_env, server_tag, server_type, server_loc)
+			c = g.db.cursor()
+			c.execute(query)
+			g.db.commit()
+		else:
+			flash('服务器连接失败，请您确认用户名，密码，端口是否正确！')
+		return redirect(url_for('main.server', env=server_env))
+	return render_template('add_server.html', form=form)
+
+
+# @main.route('/server/<server_name>/edit', methods=['GET', 'POST'])
+# def modify_server(server_name):
+#     page = request.args.get('page', 1, type=int)
+#     query = """ SELECT * FROM infra_server WHERE server_name = %s AND is_delete=0 LIMIT %s OFFSET %s """ % (server_name, config.POSTS_PER_PAGE, config.POSTS_PER_PAGE * (page - 1))
+#     c = g.db.cursor()
+#     c.execute(query)
+#     servers = [dict(id=row[0], server_hostname=row[1], server_ip=row[2], server_env=row[3], post_id=row[4]) for row in c.fetchall()]
+#     pagination = paginate('posts', 'is_delete = 0', page)
+#     return render_template('modify_server.html', endpoint='main.server', servers=servers, pagination=pagination)
+
 
 
 @main.route('/logout')
@@ -178,13 +265,5 @@ def logout():
     session.pop('logged_in', None)
     flash('You have been logged out.')
     # return render_template('login.html')
-    return redirect(url_for('main.index'))
-
-
-
-
-
-
-
-
+    return redirect(url_for('main.login'))
 
