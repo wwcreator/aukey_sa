@@ -13,12 +13,12 @@ class LoginForm(FlaskForm):
 
 
 class AddServerForm(FlaskForm):
-    server_name = StringField(u'服务器名称', validators=[DataRequired()])
+    # server_name = StringField(u'服务器名称', validators=[DataRequired()])
     server_ip = StringField(u'服务器 IP', validators=[DataRequired()])
     server_username = StringField(u'服务器用户名', validators=[DataRequired()])
     server_password = PasswordField(u'服务器密码', validators=[DataRequired()])
-    server_env = SelectField(u'所属环境', choices=[('production','PRODUCTION'),('dev','DEV'), ('test', 'TEST')])
+    server_env = SelectField(u'所属环境', choices=[('1','production'),('2','test'), ('3','dev')], default=1)
     server_tag = StringField(u'标签', validators=[DataRequired()])
-    server_type = SelectField(u'类型', choices=[(u'物理机'),(u'虚拟机')])
+    server_type = SelectField(u'类型', choices=[('1',u'物理机'),('2',u'虚拟机')], default=1)
     server_loc = StringField(u'机房机架号', validators=[DataRequired()])
     submit = SubmitField(u'添加')

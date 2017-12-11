@@ -148,6 +148,8 @@ def collect_info(ip, user, port, password):
 	# 这行代码的作用是允许连接不在know_hosts文件中的主机
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(ip, port, user, password)
+	(stdin, stdout, stderr) = ssh.exec_command('hostname')
+	hostname = stdout.read()
 	(stdin, stdout, stderr) = ssh.exec_command('cat /proc/cpuinfo |grep "processor"|wc -l')
 	cpuinfo = stdout.read()
 	(stdin, stdout, stderr) = ssh.exec_command("free -m|grep 'Mem:'|awk '{print $2}'")
@@ -161,6 +163,7 @@ def collect_info(ip, user, port, password):
 	(stdin, stdout, stderr) = ssh.exec_command("uname -a")
 	release = stdout.read()
 	ssh.close()
+	info['hostname'] = hostname
 	info['cpuinfo'] = cpuinfo
 	info['meminfo'] = meminfo
 	info['free_disk'] = all_disk - used_disk
@@ -217,14 +220,14 @@ def server(env):
 			   c.fetchall()]
 	pagination = paginate('infra_server', 'server_env = ' + str(server_env) + ' AND is_delete = 0', page)
 
-	return render_template('server.html', endpoint='main.server', servers=servers, pagination=pagination)
+	return render_template('server.html', endpoint='main.server',env=server_env, servers=servers, pagination=pagination)
 
 
 @main.route('/server/add', methods=['GET', 'POST'])
 def add_server():
 	form = AddServerForm()
 	if form.validate_on_submit():
-		server_name = form.server_name.data
+		# server_name = form.server_name.data
 		server_ip = form.server_ip.data
 		server_username = form.server_username.data
 		server_password = form.server_password.data
@@ -236,7 +239,7 @@ def add_server():
 			server_info = collect_info(server_ip, server_username, 22, server_password)
 			query = """INSERT INTO infra_server(server_name,server_ip,server_username,server_password,server_env,server_tag,server_type,server_loc)
 					  VALUES('%s','%s','%s','%s','%s','%s','%s','%s')		  
-			""" %(server_name, server_ip, server_username, server_password, server_env, server_tag, server_type, server_loc)
+			""" %(server_info['hostname'], server_ip, server_username, server_password, server_env, server_tag, server_type, server_loc)
 			c = g.db.cursor()
 			c.execute(query)
 			g.db.commit()
