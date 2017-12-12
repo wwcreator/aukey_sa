@@ -3,38 +3,41 @@
 
 {% block title %} server &middot; SA 系统 {% endblock %}
 
-{% block content %}
+{% block page_content %}
 
-    <ul class="posts">
+    <ul class="server">
         {% for server in servers %}
-            <li class="post">
-                <div class="post-content">
-                    <div class="post-title">
-                        <a href="{{ url_for('main.post', username=user, post_id=post.post_id) }}">
-                            <h2>{{ post.title }}</h2>
-                        </a>
-                    </div>
-                    <div>
-                        <div class="post-date">{{ post.create_at }}</div>
-                    </div>
-                    <div class="post-body">
-                        {{ post.content }}
-                        <div>
-                            <a class="post-desc" href="{{ url_for('main.post', username=user, post_id=post.post_id) }}">
-                                Read More ->
-                            </a>
-                            &nbsp; &nbsp;
-                            {% if user == session.username %}
-                                <a class="btn btn-primary"
-                                   href="{{ url_for('main.edit_post', username=user, post_id=post.post_id) }}">Edit</a>
-                                <a class="btn btn-danger"
-                                   href="{{ url_for('main.delete_post',username=user, post_id=post.post_id) }}">Delete</a>
-                            {% endif %}
-                        </div>
-
-                    </div>
-
-
+            <li >
+                <div>
+                    {{ server.server_ip }}
+                </div>
+                <div>
+                    {{ server.server_hostname }}
+                    {% if  server.server_env == 1 %}
+                        production
+                    {% elif server.server_env == 2 %}
+                        test
+                    {% elif server.server_env == 3 %}
+                        dev
+                    {% endif %}
+                    {{ server.server_os }}
+                    {{ server.server_version }}
+                    {% if  server.server_type == 1 %}
+                        物理机
+                    {% else %}
+                        虚拟机
+                    {% endif %}
+                </div>
+                <div>
+                    {{ server.server_mem }}
+                    {{ server.server_cpu }}
+                    {{ server.server_disk }}
+                </div>
+                <div>
+{#                    <a class="btn btn-primary"#}
+{#                       href="{{ url_for('main.edit_post', username=user, post_id=post.post_id) }}">Edit</a>#}
+{#                    <a class="btn btn-danger"#}
+{#                       href="{{ url_for('main.delete_post',username=user, post_id=post.post_id) }}">Delete</a>#}
                 </div>
             </li>
         {% else %}
@@ -43,7 +46,7 @@
     </ul>
     {% if pagination %}
         <div class="pagination">
-            {{ macros.pagination_widget(pagination, endpoint, env='production') }}
+            {{ macros.pagination_widget(pagination, endpoint, env='test') }}
         </div>
     {% endif %}
 {% endblock %}
