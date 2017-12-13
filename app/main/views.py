@@ -7,7 +7,7 @@ import math
 import paramiko
 import ipaddress
 import hashlib
-from forms import LoginForm, AddServerForm
+from forms import LoginForm, AddServerForm, UpdateServerForm
 from flask import (render_template,
 				   g,
 				   request,
@@ -145,8 +145,8 @@ def collect_info(ip, user, port, password):
 	cpuinfo = stdout.read()
 	(stdin, stdout, stderr) = ssh.exec_command("free -g|grep 'Mem:'|awk '{print $2}'")
 	meminfo = stdout.read()
-	(stdin, stdout, stderr) = ssh.exec_command("df -kl|awk '{print $2,$3}'|sed '1d'|awk '{sum += $2};END {print sum}'")
-	used_disk = stdout.read()
+	# (stdin, stdout, stderr) = ssh.exec_command("df -kl|awk '{print $2,$3}'|sed '1d'|awk '{sum += $2};END {print sum}'")
+	# used_disk = stdout.read()
 	(stdin, stdout, stderr) = ssh.exec_command("df -kl|awk '{print $2,$3}'|sed '1d'|awk '{sum += $1};END {print sum}'")
 	diskinfo = stdout.read()
 	# (stdin, stdout, stderr) = ssh.exec_command("""cat /proc/uptime| awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("%d Day %d:%d:%d \n",run_days,run_hour,run_minute,run_second)}'""")
@@ -157,9 +157,7 @@ def collect_info(ip, user, port, password):
 	info['hostname'] = hostname
 	info['cpuinfo'] = cpuinfo
 	info['meminfo'] = meminfo
-	# info['used_disk'] = all_disk - used_disk
 	info['diskinfo'] = diskinfo
-	# info['uptime'] = uptime
 	info['release'] = release
 	return info
 
@@ -213,8 +211,7 @@ def server(env):
 				server_type=row[10], server_loc=row[11]) for row in c.fetchall()]
 	pagination = paginate('infra_server', 'server_env = ' + str(server_env) + ' AND is_delete = 0', page)
 
-	return render_template('server.html', endpoint='main.server', env=server_env, servers=servers,
-						   pagination=pagination)
+	return render_template('server.html', endpoint='main.server', env=server_env, servers=servers,pagination=pagination)
 
 
 @main.route('/server/add', methods=['GET', 'POST'])
@@ -247,15 +244,47 @@ def add_server():
 	return render_template('add_server.html', form=form)
 
 
-# @main.route('/server/<server_name>/edit', methods=['GET', 'POST'])
-# def modify_server(server_name):
-#     page = request.args.get('page', 1, type=int)
-#     query = """ SELECT * FROM infra_server WHERE server_name = %s AND is_delete=0 LIMIT %s OFFSET %s """ % (server_name, config.POSTS_PER_PAGE, config.POSTS_PER_PAGE * (page - 1))
-#     c = g.db.cursor()
-#     c.execute(query)
-#     servers = [dict(id=row[0], server_hostname=row[1], server_ip=row[2], server_env=row[3], post_id=row[4]) for row in c.fetchall()]
-#     pagination = paginate('posts', 'is_delete = 0', page)
-#     return render_template('modify_server.html', endpoint='main.server', servers=servers, pagination=pagination)
+@main.route('/server/<int:server_id>', methods=['GET', 'POST'])
+def get_serverinfo(server_id):
+	query = """SELECT id,server_hostname, inet_ntoa(server_ip),server_env,server_tag,server_os,
+  				server_version,server_cpu,server_mem,server_disk,server_type,server_loc 
+  				FROM infra_server WHERE id=%s """ %(server_id)
+	c = g.db.cursor()
+	c.execute(query)
+	servers = [dict(id=row[0], server_hostname=row[1], server_ip=row[2], server_env=row[3], server_tag=row[4],
+					server_os=row[5], server_version=row[6], server_cpu=row[7], server_mem=row[8], server_disk=row[9],
+					server_type=row[10], server_loc=row[11]) for row in c.fetchall()]
+	return render_template('server.html', servers=servers)
+
+@main.route('/server/<int:server_id>/edit', methods=['GET', 'POST'])
+def update_server(server_id):
+	if not session.get('logged_in'):
+		abort(401)
+	form = UpdateServerForm()
+	if form.validate_on_submit():
+		server_env = form.server_env.data
+		server_tag = form.server_tag.data
+		server_type = form.server_type.data
+		server_loc = form.server_loc.data
+		update_server = """ UPDATE infra_server 
+ 							SET server_env=%s, server_tag=%s, server_type=%s,server_loc='%s'
+ 							WHERE server_id= %s """ % (server_env, server_tag, server_type, server_loc, server_id)
+		c = g.db.cursor()
+		c.execute(update_server)
+		g.commit()
+	return render_template('modify_server.html')
+
+
+@main.route('/server/<int:server_id>/delete', methods=['GET', 'POST'])
+def delete_post(server_id):
+    if not session.get('logged_in'):
+        abort(401)
+    delete_server = "UPDATE infra_server SET is_delete = 0 WHERE server_id = %s" % server_id
+    c = g.db.cursor()
+    c.execute(delete_server)
+    g.db.commit()
+    flash('server has been deleted successfully.')
+    return redirect(url_for('main.server', env='production'))
 
 
 @main.route('/logout')
@@ -264,5 +293,4 @@ def logout():
 	session.pop('username', None)
 	session.pop('logged_in', None)
 	flash('You have been logged out.')
-	# return render_template('login.html')
 	return redirect(url_for('main.login'))

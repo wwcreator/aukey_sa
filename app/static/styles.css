@@ -28,14 +28,3 @@ container{
     border: 1px solid #ddd;
 }
 
-.server {
-    position: relative;
-    float:left;
-    padding: 6px 12px;
-    background-color: #0C4842;
-}
-
-
-.server>li>div {
-    display: inline-block;
-}

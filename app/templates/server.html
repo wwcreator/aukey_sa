@@ -4,50 +4,49 @@
 {% block title %} server &middot; SA 系统 {% endblock %}
 
 {% block page_content %}
-
-    <ul class="server">
         {% for server in servers %}
-            <li >
-                <div>
-                    {{ server.server_ip }}
-                </div>
-                <div>
-                    {{ server.server_hostname }}
-                    {% if  server.server_env == 1 %}
-                        production
-                    {% elif server.server_env == 2 %}
-                        test
-                    {% elif server.server_env == 3 %}
-                        dev
-                    {% endif %}
-                    {{ server.server_os }}
-                    {{ server.server_version }}
-                    {% if  server.server_type == 1 %}
-                        物理机
-                    {% else %}
-                        虚拟机
-                    {% endif %}
-                </div>
-                <div>
-                    {{ server.server_mem }}
-                    {{ server.server_cpu }}
-                    {{ server.server_disk }}
-                </div>
-                <div>
-{#                    <a class="btn btn-primary"#}
-{#                       href="{{ url_for('main.edit_post', username=user, post_id=post.post_id) }}">Edit</a>#}
+            <div class="col-sm-6 col-md-4">
+                <h3>{{ server.server_ip }} </h3>
+                <span class="badge">{{ server.server_hostname }}</span>
+                {% if  server.server_env == 1 %}
+                    <span class="label label-danger">production</span>
+                {% elif server.server_env == 2 %}
+                    <span class="label label-info">test</span>
+                {% elif server.server_env == 3 %}
+                    <span class="label label-warning">dev</span>
+                {% endif %}
+                {% if  server.server_os  == 1 %}
+                    <span class="label label-primary">Linux</span>
+                {% elif server.server_env == 2 %}
+                    <span class="label label-primary">Windows</span>
+                {% elif server.server_env == 3 %}
+                    <span class="label label-primary">Ali</span>
+                {% endif %}
+                {{ server.server_version }}
+                {% if  server.server_type == 1 %}
+                    <span class="label label-success">物理机</span>
+                {% else %}
+                    <span class="label label-default">虚拟机</span>
+                {% endif %}
+                <ul class="list-group">
+                    <li class="list-group-item"> 内存:{{ server.server_mem }} G </li>
+                    <li class="list-group-item"> CPU:{{ server.server_cpu }} 核</li>
+                    <li class="list-group-item"> 磁盘:{{ server.server_disk }} G </li>
+                </ul>
+{#                <div>#}
+{#                    <a class="btn btn-default"#}
+{#                       href="#">Edit</a>#}
 {#                    <a class="btn btn-danger"#}
-{#                       href="{{ url_for('main.delete_post',username=user, post_id=post.post_id) }}">Delete</a>#}
-                </div>
-            </li>
+{#                       href="#">Delete</a>#}
+{#                </div>#}
+            </div>
         {% else %}
-            <li><em>Unbelievable. No entries here so far</em></li>
+            <span><em>Unbelievable. No entries here so far</em></span>
         {% endfor %}
-    </ul>
-    {% if pagination %}
-        <div class="pagination">
-            {{ macros.pagination_widget(pagination, endpoint, env='test') }}
-        </div>
-    {% endif %}
+{#    {% if pagination %}#}
+{#        <div class="pagination">#}
+{#            {{ macros.pagination_widget(pagination, endpoint, env='test') }}#}
+{#        </div>#}
+{#    {% endif %}#}
 {% endblock %}
 
