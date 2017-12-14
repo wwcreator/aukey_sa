@@ -5,38 +5,19 @@
 
 {% block page_content %}
     <div class="container">
-        {% for server in servers %}
+        {% for instance in instances %}
             <div class="col-sm-6 col-md-4">
-                <h3>{{ server.server_ip }} </h3>
-                <span class="badge">{{ server.server_hostname }}</span>
-                {% if  server.server_env == 1 %}
-                    <span class="label label-danger">production</span>
-                {% elif server.server_env == 2 %}
-                    <span class="label label-info">test</span>
-                {% elif server.server_env == 3 %}
-                    <span class="label label-warning">dev</span>
+                <h3>{{ instance.instance_name }} </h3>
+                <span class="badge">{{ instance.server_ip }}</span>
+                {% if  instance.instance_type == 1 %}
+                    <span class="label label-danger">MySQL</span>
+                {% elif instance.instance_type == 2 %}
+                    <span class="label label-info">SQL SERVER</span>
                 {% endif %}
-                {% if  server.server_os  == 1 %}
-                    <span class="label label-primary">Linux</span>
-                {% elif server.server_os == 2 %}
-                    <span class="label label-primary">Windows</span>
-                {% elif server.server_os == 3 %}
-                    <span class="label label-primary">Ali</span>
-                {% endif %}
-                <span class="label label-danger">{{ server.server_version }}</span>
-                {% if  server.server_type == 1 %}
-                    <span class="label label-success">物理机</span>
-                {% else %}
-                    <span class="label label-default">虚拟机</span>
-                {% endif %}
-                <span class="label label-warning">内存:{{ server.server_mem }} G </span>
-                <span class="label label-success">CPU:{{ server.server_cpu }} 核 </span>
-                <span class="label label-info">磁盘:{{ server.server_disk }} G</span>
+                <span class="label label-warning">{{ instance.instance_port }} </span>
                 <div class="server">
-                    <a class="btn btn-default"
-                       href="{{ url_for("main.update_server",server_id=server.id) }}">Edit</a>
                     <button class="btn btn-danger" data-toggle="modal" data-target="#confirm-delete"
-                       data-href="{{ url_for("main.delete_server",server_env=server.server_env, server_id=server.id) }}">Delete</button>
+                       data-href="{{ url_for("main.delete_instance",instance_type=instance.instance_type, instance_id=instance.id) }}">Delete</button>
                 </div>
                 <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
                      aria-hidden="true">
@@ -64,7 +45,7 @@
     <div class="pagination">
         {% if pagination %}
             <div class="pagination">
-                {{ macros.pagination_widget(pagination, endpoint, server_env='test') }}
+                {{ macros.pagination_widget(pagination, endpoint, instance_type='MySQL') }}
             </div>
         {% endif %}
     </div>
