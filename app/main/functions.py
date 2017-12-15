@@ -76,7 +76,11 @@ def get_reccount(table_name, where):
 
 def paginate(table_name, where, page):
 	pagination = {}
-	pagecount = int(math.floor(get_reccount(table_name, where) / config.POSTS_PER_PAGE) + 1)
+	if get_reccount(table_name, where) > config.POSTS_PER_PAGE:
+		pagecount = int(math.ceil(get_reccount(table_name, where) / config.POSTS_PER_PAGE))
+	else:
+		pagecount = 1
+
 	pagination['pagecount'] = pagecount
 	pagination['page'] = page
 	if page == 1 & page != pagecount:
@@ -118,8 +122,7 @@ def is_connect_server(ip, user, port, password):
 		return False
 
 
-
-def collect_info(ip, user, port, password):
+def collect_serverinfo(ip, user, port, password):
 	info = {}
 	ip = ip
 	user = user
@@ -158,9 +161,14 @@ def collect_info(ip, user, port, password):
 
 def is_connect_mysql(server_ip, instance_username,instance_password, instance_port):
 	try:
-		mdb.connect(hostname=server_ip, username=instance_username,password=instance_password, port=instance_port, charset='utf8')
+		server_ip = server_ip
+		instance_username = instance_username
+		instance_password = instance_password
+		instance_port = int(instance_port)
+		mdb.connect(host=server_ip, user=instance_username, passwd=instance_password, port=instance_port, charset='utf8')
 		return True
-	except:
+	except Exception  as e:
+		print e
 		return False
 
 

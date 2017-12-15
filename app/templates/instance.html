@@ -10,7 +10,7 @@
                 <h3>{{ instance.instance_name }} </h3>
                 <span class="badge">{{ instance.server_ip }}</span>
                 {% if  instance.instance_type == 1 %}
-                    <span class="label label-danger">MySQL</span>
+                    <span class="label label-success">MySQL</span>
                 {% elif instance.instance_type == 2 %}
                     <span class="label label-info">SQL SERVER</span>
                 {% endif %}
@@ -27,7 +27,7 @@
                                 请确认
                             </div>
                             <div class="modal-body">
-                                确认删除 {{ server.server_ip }} 该记录吗？
+                                确认删除 {{ instance.instance_name }} 该记录吗？
                             </div>
                             <div class="modal-footer">
                                 <a class="btn btn-danger btn-ok">删除</a>
@@ -45,7 +45,7 @@
     <div class="pagination">
         {% if pagination %}
             <div class="pagination">
-                {{ macros.pagination_widget(pagination, endpoint, instance_type='MySQL') }}
+                {{ macros.pagination_widget(pagination, endpoint, instance_type=instance_type) }}
             </div>
         {% endif %}
     </div>

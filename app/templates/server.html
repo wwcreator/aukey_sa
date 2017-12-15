@@ -64,7 +64,7 @@
     <div class="pagination">
         {% if pagination %}
             <div class="pagination">
-                {{ macros.pagination_widget(pagination, endpoint, server_env='test') }}
+                {{ macros.pagination_widget(pagination, endpoint, server_env=server_env) }}
             </div>
         {% endif %}
     </div>
