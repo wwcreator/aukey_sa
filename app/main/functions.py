@@ -172,3 +172,20 @@ def is_connect_mysql(server_ip, instance_username,instance_password, instance_po
 		return False
 
 
+def get_server_conn(server_ip):
+	try:
+		c = g.db.cursor()
+		c.execute("SELECT server_username, server_password, server_port FROM infra_server WHERE server_ip='%s'" % server_ip)
+		results = c.fetchone()
+		return results
+	except Exception  as e:
+		print e
+
+
+def new_mysql(server_ip,instance_port,instance_mem,instance_disk):
+	try:
+		server_ip = server_ip
+		server_conn = get_server_conn(server_ip)
+		
+	except Exception as e:
+		print e

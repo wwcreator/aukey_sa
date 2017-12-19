@@ -86,18 +86,19 @@ def add_server():
 		server_ip = form.server_ip.data
 		server_username = form.server_username.data
 		server_password = form.server_password.data
+		server_port = form.server_port.data
 		server_env = form.server_env.data
 		server_tag = form.server_tag.data
 		server_os = form.server_os.data
 		server_type = form.server_type.data
 		server_loc = form.server_loc.data
-		if func.is_connect_server(server_ip, server_username, 22, server_password):
-			server_info = func.collect_info(server_ip, server_username, 22, server_password)
-			query = """INSERT INTO infra_server(server_hostname,server_ip,server_username,server_password,server_env,server_tag,
+		if func.is_connect_server(server_ip, server_username, server_port, server_password):
+			server_info = func.collect_info(server_ip, server_username, server_port, server_password)
+			query = """INSERT INTO infra_server(server_hostname,server_ip,server_username,server_password, server_port, server_env,server_tag,
 						server_os,server_version,server_cpu, server_mem,server_disk,server_type,server_loc)
-					  VALUES('%s','%s','%s','%s',%s,'%s','%s','%s', %s, %s, %s,%s,'%s')		  
+					  VALUES('%s','%s','%s','%s',%s,%s,'%s','%s','%s', %s, %s, %s,%s,'%s')		  
 			""" % (
-				server_info['hostname'], int(ipaddress.ip_address(server_ip)), server_username, server_password, server_env, server_tag, server_os,
+				server_info['hostname'], int(ipaddress.ip_address(server_ip)), server_username, server_password, server_port, server_env, server_tag, server_os,
 				server_info['release'],
 				int(server_info['cpuinfo']), int(server_info['meminfo']), int(server_info['diskinfo'])/1024/1024, server_type, server_loc)
 			c = g.db.cursor()
@@ -127,13 +128,14 @@ def update_server(server_id):
 		abort(401)
 	form = UpdateServerForm()
 	if form.validate_on_submit():
+		server_port = form.server_port.data
 		server_env = form.server_env.data
 		server_tag = form.server_tag.data
 		server_type = form.server_type.data
 		server_loc = form.server_loc.data
 		update_server = """ UPDATE infra_server 
- 							SET server_env=%s, server_tag='%s', server_type=%s,server_loc='%s'
- 							WHERE id= %s """ % (server_env, server_tag, server_type, server_loc, server_id)
+ 							SET server_port=%s, server_env=%s, server_tag='%s', server_type=%s,server_loc='%s'
+ 							WHERE id= %s """ % (server_port, server_env, server_tag, server_type, server_loc, server_id)
 		c = g.db.cursor()
 		c.execute(update_server)
 		g.db.commit()
