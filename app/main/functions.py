@@ -1,5 +1,6 @@
 import paramiko
 import math
+import random
 from config import config
 import MySQLdb as mdb
 from flask import (render_template,
@@ -10,6 +11,7 @@ from flask import (render_template,
 				   redirect,
 				   url_for,
 				   flash)
+from fabric.api import run, env, settings, cd
 
 
 def verify_user(username):
@@ -182,10 +184,22 @@ def get_server_conn(server_ip):
 		print e
 
 
-def new_mysql(server_ip,instance_port,instance_mem,instance_disk):
+def new_mysql(server_ip, instance_name, instance_port, instance_mem, instance_disk):
 	try:
-		server_ip = server_ip
+		mysql_home = '/data/service/mysql/'+instance_name
+		mysql_port = random.randint(6, 16)
 		server_conn = get_server_conn(server_ip)
-		
+		env.host = server_ip
+		env.user=server_conn['server_username']
+		env.password = server_conn['server_password']
+		env.port = server_conn['server_port']
+		with settings(warn_only=True):
+			if run("test -d %s" % mysql_home).failed:
+				run("mkdir -p %s && $_ && chown -R mysql:mysql ." % mysql_home)
+			run("put")
+
+		# with cd(mysql_home):
+		# 	run()
+
 	except Exception as e:
 		print e
